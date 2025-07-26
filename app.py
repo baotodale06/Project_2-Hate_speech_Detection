@@ -134,7 +134,7 @@ submitted = st.button("Phân tích văn bản")
 if submitted:
     if text_input.strip():
         with st.spinner('Đang phân tích, vui lòng chờ...'):
-            predictions = mock_predict(text_input)
+            predictions = model_predict(text_input)
 
         st.markdown('<div class="result-container">', unsafe_allow_html=True)
         st.markdown('<p class="result-header">Kết quả phân tích</p>', unsafe_allow_html=True)
