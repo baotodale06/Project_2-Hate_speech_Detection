@@ -2,6 +2,11 @@ import streamlit as st
 import time
 import random
 import pandas as pd
+from train import main as train_model
+from inference import predict
+import numpy as np
+
+classify_model, embed_model, tokenizer, device = train_model()
 
 st.set_page_config(
     page_title="Phân loại chủ đề LGBT+",
@@ -109,14 +114,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-def model_predict(text: str):
+def model_predict(text: str, classify_model, embed_model, tokenizer, device):
+    """
+    output:
+        return 0/1 luôn, ko cần conf
+    """
     if not text.strip():
         # Trả về 0 nếu không có input
-        return {label: 0.0 for label in ["L", "G", "B", "T", "O", "NR"]}
+        #return {label: 0.0 for label in ["L", "G", "B", "T", "O", "NR"]}
+        return np.zeros((1,5))
 
    #Predict ở đây nha
-
-    return labels
+    y_pred = predict(text, classify_model, embed_model, tokenizer, device)
+    return y_pred
 
 # --- UI ---
 
@@ -125,7 +135,8 @@ st.markdown("Nhập một đoạn văn bản để phân tích và xác định 
 
 text_input = st.text_area(
     "Nhập văn bản của bạn vào đây...",
-    height=200,
+    height=100,
+    label = "input"
     placeholder="Ví dụ: 'Một câu chuyện cảm động về hành trình của người chuyển giới...'"
 )
 
@@ -134,37 +145,27 @@ submitted = st.button("Phân tích văn bản")
 if submitted:
     if text_input.strip():
         with st.spinner('Đang phân tích, vui lòng chờ...'):
-            predictions = model_predict(text_input)
+            predictions = model_predict(text_input,classify_model, embed_model, tokenizer, device)
 
         st.markdown('<div class="result-container">', unsafe_allow_html=True)
         st.markdown('<p class="result-header">Kết quả phân tích</p>', unsafe_allow_html=True)
 
-        label_descriptions = {
-            "L": "Lesbian (Đồng tính nữ)",
-            "G": "Gay (Đồng tính nam)",
-            "B": "Bisexual (Song tính)",
-            "T": "Transgender (Chuyển giới)",
-            "O": "Other (Chủ đề khác liên quan)",
-            "NR": "Not Related (Không liên quan)"
-        }
+        label_w_pred = {label:predictions[id] for id, label in enumerate("LGBTO")}
 
-        col1, col2, col3 = st.columns(3)
-        cols = [col1, col2, col3]
+        col1, col2, col3, col4, col5 = st.columns(5)
+        cols = [col1, col2, col3, col4, col5]
         
-        sorted_labels = sorted(predictions.items(), key=lambda item: item[1], reverse=True)
-
-        for i, (label, confidence) in enumerate(sorted_labels):
-            is_predicted = 1 if confidence > 0.5 else 0
-            
-            with cols[i % 3]:
-                predicted_class = "predicted" if is_predicted else ""
+        i=0
+        for label, prediction in label_w_pred.items():
+            with cols[i % 5]:
+                answer = "Có" if prediction else "Không"
                 st.markdown(f"""
-                <div class="label-box {predicted_class}">
+                <div class="label-box {label}">
                     <div class="label-title">{label}</div>
-                    <div class="label-description">{label_descriptions.get(label, "")}</div>
-                    <div class="label-confidence">Độ tin cậy: {confidence:.2%}</div>
+                    <div class="label-confidence">{answer}</div>
                 </div>
                 """, unsafe_allow_html=True)
+                i+=1
 
         st.markdown('</div>', unsafe_allow_html=True)
 
