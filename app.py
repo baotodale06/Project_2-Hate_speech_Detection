@@ -137,7 +137,7 @@ text_input = st.text_area(
     "Nhập văn bản của bạn vào đây...",
     height=100,
     label = "input"
-    placeholder="Ví dụ: 'Một câu chuyện cảm động về hành trình của người chuyển giới...'"
+    # placeholder="Ví dụ: 'Một câu chuyện cảm động về hành trình của người chuyển giới...'"
 )
 
 submitted = st.button("Phân tích văn bản")
